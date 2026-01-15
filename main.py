@@ -1,8 +1,15 @@
+import sys
 import os
 import webbrowser
 import threading
 import time
-import sys
+
+# Fix for uvicorn/logging.py's "isatty" check when running with --noconsole
+if sys.stdout is None:
+    sys.stdout = open(os.devnull, 'w')
+if sys.stderr is None:
+    sys.stderr = open(os.devnull, 'w')
+
 from pathlib import Path
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, status
@@ -175,6 +182,9 @@ def open_browser():
 
 if __name__ == "__main__":
     import uvicorn
+    # Start the browser opening thread
+    threading.Thread(target=open_browser, daemon=True).start()
+    uvicorn.run(app, host="0.0.0.0", port=8000)
     # Start the browser opening thread
     threading.Thread(target=open_browser, daemon=True).start()
     uvicorn.run(app, host="0.0.0.0", port=8000)
