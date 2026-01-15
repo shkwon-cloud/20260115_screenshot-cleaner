@@ -2,6 +2,7 @@ import os
 import webbrowser
 import threading
 import time
+import sys
 from pathlib import Path
 from typing import List, Optional
 from fastapi import FastAPI, HTTPException, status
@@ -9,6 +10,16 @@ from fastapi.responses import FileResponse
 from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 from fastapi.middleware.cors import CORSMiddleware
+
+def get_resource_path(relative_path: str) -> Path:
+    """Get absolute path to resource, works for dev and for PyInstaller"""
+    try:
+        # PyInstaller creates a temp folder and stores path in _MEIPASS
+        base_path = Path(sys._MEIPASS)
+    except Exception:
+        base_path = Path(__file__).parent.resolve()
+
+    return base_path / relative_path
 
 # --- Configuration ---
 SCREENSHOTS_DIR = Path(r"C:\Users\User\OneDrive\Pictures\Screenshots")
@@ -150,7 +161,8 @@ async def get_stats():
 
 @app.get("/")
 async def read_index():
-    return FileResponse("index.html")
+    index_path = get_resource_path("index.html")
+    return FileResponse(index_path)
 
 # Serve the screenshots as static files for previewing
 # Access via: http://localhost:8000/images/filename.png
