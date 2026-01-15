@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="ko">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Screenshot Cleaner</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #6366f1;
+            --primary-hover: #4f46e5;
+            --danger: #ef4444;
+            --danger-hover: #dc2626;
+            --bg: #0f172a;
+            --card-bg: rgba(30, 41, 59, 0.7);
+            --border: rgba(255, 255, 255, 0.1);
+            --text: #f1f5f9;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Outfit', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+        }
+
+        body {
+            background: radial-gradient(circle at top right, #1e1b4b, #0f172a);
+            color: var(--text);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* Glassmorphism Header */
+        header {
+            position: sticky;
+            top: 0;
+            z-index: 100;
+            background: rgba(15, 23, 42, 0.8);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .logo {
+            font-size: 1.5rem;
+            font-weight: 600;
+            background: linear-gradient(to right, #818cf8, #c084fc);
+            background-clip: text;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .stats-container {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .stats {
+            background: var(--card-bg);
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            border: 1px solid var(--border);
+            font-size: 0.9rem;
+            color: #818cf8;
+            font-weight: 600;
+        }
+
+        .btn-finish {
+            background: rgba(255, 255, 255, 0.1);
+            color: var(--text);
+            border: 1px solid var(--border);
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            font-size: 0.9rem;
+            transition: all 0.2s;
+        }
+
+        .btn-finish:hover {
+            background: var(--danger);
+            border-color: var(--danger);
+        }
+
+        .btn-batch-delete {
+            background: var(--danger);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 99px;
+            font-size: 0.9rem;
+            display: none;
+            /* Hidden by default */
+            white-space: nowrap;
+        }
+
+        /* Main Layout */
+        main {
+            padding: 2rem;
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+
+        /* Card Style */
+        .card {
+            background: var(--card-bg);
+            border: 1px solid var(--border);
+            border-radius: 1rem;
+            overflow: hidden;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+            position: relative;
+            animation: fadeIn 0.5s ease backwards;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .card-header {
+            padding: 0.75rem 1rem;
+            background: rgba(255, 255, 255, 0.03);
+            border-bottom: 1px solid var(--border);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+
+        .header-label {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            font-weight: 600;
+        }
+
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.3);
+            border-color: rgba(255, 255, 255, 0.2);
+        }
+
+        .img-container {
+            width: 100%;
+            height: 200px;
+            overflow: hidden;
+            background: #1e293b;
+            position: relative;
+            cursor: pointer;
+        }
+
+        .card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transition: transform 0.5s ease;
+        }
+
+        .card:hover img {
+            transform: scale(1.05);
+        }
+
+        .card-info {
+            padding: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .filename {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            max-width: 180px;
+        }
+
+        .filesize {
+            font-size: 0.8rem;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 2px 8px;
+            border-radius: 4px;
+        }
+
+        .actions {
+            padding: 0.1rem 1rem 1rem;
+            display: flex;
+            gap: 0.5rem;
+            align-items: center;
+        }
+
+        /* Checkbox Style */
+        .checkbox-container {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .custom-checkbox {
+            width: 22px;
+            height: 22px;
+            cursor: pointer;
+            accent-color: var(--primary);
+            border-radius: 4px;
+        }
+
+        button {
+            cursor: pointer;
+            border: none;
+            border-radius: 0.5rem;
+            padding: 0.6rem 1rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            flex: 1;
+        }
+
+        .btn-delete {
+            background: var(--danger);
+            color: white;
+        }
+
+        .btn-delete:hover {
+            background: var(--danger-hover);
+        }
+
+        /* Modal Preview */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(15, 23, 42, 0.95);
+            z-index: 1000;
+            display: none;
+            justify-content: center;
+            align-items: center;
+            padding: 2rem;
+            backdrop-filter: blur(8px);
+        }
+
+        .modal.active {
+            display: flex;
+        }
+
+        .modal-content {
+            max-width: 90%;
+            max-height: 90%;
+            position: relative;
+        }
+
+        .modal-content img {
+            max-width: 100%;
+            max-height: 80vh;
+            border-radius: 0.5rem;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+
+        .modal-close {
+            position: absolute;
+            top: -2.5rem;
+            right: 0;
+            color: white;
+            font-size: 1.5rem;
+            cursor: pointer;
+            padding: 5px;
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Empty State */
+        .empty {
+            text-align: center;
+            padding: 5rem 2rem;
+            color: var(--text-muted);
+        }
+    </style>
+</head>
+
+<body>
+
+    <header>
+        <div class="logo">Screenshot Cleaner</div>
+        <div class="stats-container">
+            <button id="batchDeleteBtn" class="btn-batch-delete" onclick="batchDelete()">Delete Selected (0)</button>
+            <div class="stats" id="totalSize">Saved: 0 MB</div>
+            <button class="btn-finish" onclick="shutdownApp()">Finish</button>
+        </div>
+    </header>
+
+    <main id="app">
+        <div class="grid" id="gallery">
+            <!-- Cards will be injected here -->
+        </div>
+        <div id="emptyState" class="empty" style="display:none;">
+            <h2>No screenshots found in the directory.</h2>
+        </div>
+    </main>
+
+    <div class="modal" id="modal">
+        <div class="modal-content">
+            <span class="modal-close" onclick="closeModal()">&times;</span>
+            <img id="modalImg" src="" alt="Preview">
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = ""; // Relative path as served by FastAPI
+        let screenshots = [];
+        let selectedFiles = new Set();
+        let totalSaved = 0;
+
+        async function init() {
+            await fetchStats();
+            await fetchScreenshots();
+        }
+
+        async function fetchStats() {
+            try {
+                const res = await fetch(`${API_BASE}/stats`);
+                const data = await res.json();
+                totalSaved = data.totalSavedSpace;
+                updateStatsUI();
+            } catch (e) { console.error("Stats error", e); }
+        }
+
+        async function fetchScreenshots() {
+            try {
+                const res = await fetch(`${API_BASE}/screenshots`);
+                screenshots = await res.json();
+                render();
+            } catch (e) { console.error("Fetch error", e); }
+        }
+
+        function formatSize(bytes) {
+            if (bytes === 0) return '0 B';
+            const k = 1024;
+            const sizes = ['B', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function updateStatsUI() {
+            document.getElementById('totalSize').innerText = `Saved: ${formatSize(totalSaved)}`;
+        }
+
+        function render() {
+            const gallery = document.getElementById('gallery');
+            const emptyState = document.getElementById('emptyState');
+            gallery.innerHTML = '';
+
+            if (screenshots.length === 0) {
+                emptyState.style.display = 'block';
+                return;
+            } else {
+                emptyState.style.display = 'none';
+            }
+
+            screenshots.forEach((s, idx) => {
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.style.animationDelay = `${idx * 0.05}s`;
+
+                const isSelected = selectedFiles.has(s.filename);
+
+                card.innerHTML = `
+                    <div class="card-header">
+                        <div class="checkbox-container">
+                            <input type="checkbox" class="custom-checkbox" 
+                                ${isSelected ? 'checked' : ''} 
+                                onchange="toggleSelection('${s.filename}', this.checked)">
+                        </div>
+                        <span class="header-label">Select to delete</span>
+                    </div>
+                    <div class="img-container" onclick="openModal('${s.filename}')">
+                        <img src="${API_BASE}/images/${s.filename}" alt="${s.filename}" loading="lazy">
+                    </div>
+                    <div class="card-info">
+                        <span class="filename" title="${s.filename}">${s.filename}</span>
+                        <span class="filesize">${formatSize(s.size)}</span>
+                    </div>
+                    <div class="actions">
+                        <button class="btn-delete" onclick="deleteImage('${s.filename}')">Delete</button>
+                    </div>
+                `;
+                gallery.appendChild(card);
+            });
+        }
+
+        function toggleSelection(filename, isSelected) {
+            if (isSelected) {
+                selectedFiles.add(filename);
+            } else {
+                selectedFiles.delete(filename);
+            }
+            updateBatchButton();
+        }
+
+        function updateBatchButton() {
+            const btn = document.getElementById('batchDeleteBtn');
+            if (selectedFiles.size > 0) {
+                // Calculate total size
+                let totalSelectionSize = 0;
+                selectedFiles.forEach(filename => {
+                    const s = screenshots.find(item => item.filename === filename);
+                    if (s) totalSelectionSize += s.size;
+                });
+
+                btn.style.display = 'block';
+                const totalMB = (totalSelectionSize / (1024 * 1024)).toFixed(2);
+                btn.innerText = `Delete Selected (${selectedFiles.size} - ${totalMB} MB)`;
+            } else {
+                btn.style.display = 'none';
+            }
+        }
+
+        async function deleteImage(filename) {
+            if (!confirm(`Delete ${filename}?`)) return;
+
+            try {
+                const res = await fetch(`${API_BASE}/screenshots/${filename}`, { method: 'DELETE' });
+                const data = await res.json();
+
+                if (data.success) {
+                    totalSaved += data.deletedSize;
+                    updateStatsUI();
+                    screenshots = screenshots.filter(s => s.filename !== filename);
+                    selectedFiles.delete(filename);
+                    updateBatchButton();
+                    render();
+                }
+            } catch (e) { alert("Delete failed"); }
+        }
+
+        async function batchDelete() {
+            const count = selectedFiles.size;
+            if (count === 0) return;
+            if (!confirm(`Delete ${count} selected screenshots?`)) return;
+
+            const filenames = Array.from(selectedFiles);
+
+            try {
+                const res = await fetch(`${API_BASE}/screenshots/batch-delete`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ filenames })
+                });
+                const data = await res.json();
+
+                if (data.success) {
+                    totalSaved += data.deletedSize;
+                    updateStatsUI();
+
+                    // Filter out successfully deleted files
+                    const deletedSet = new Set(filenames.filter(f => !data.failedFiles.includes(f)));
+                    screenshots = screenshots.filter(s => !deletedSet.has(s.filename));
+
+                    selectedFiles.clear();
+                    updateBatchButton();
+                    render();
+
+                    if (data.failedFiles.length > 0) {
+                        alert(`Failed to delete ${data.failedFiles.length} files.`);
+                    }
+                }
+            } catch (e) { alert("Batch delete failed"); }
+        }
+
+        async function shutdownApp() {
+            if (!confirm("Stop the application?")) return;
+            try {
+                await fetch(`${API_BASE}/shutdown`, { method: 'POST' });
+                document.body.innerHTML = `
+                    <div style="display:flex; flex-direction:column; justify-content:center; align-items:center; height:100vh; color:white; font-family:sans-serif; text-align:center;">
+                        <h1>Application Stopped</h1>
+                        <p>This tab will close automatically.</p>
+                    </div>
+                `;
+                setTimeout(() => {
+                    window.close();
+                }, 1000);
+            } catch (e) { console.error("Shutdown error", e); }
+        }
+
+        function openModal(filename) {
+            const modal = document.getElementById('modal');
+            const modalImg = document.getElementById('modalImg');
+            modalImg.src = `${API_BASE}/images/${filename}`;
+            modal.classList.add('active');
+        }
+
+        function closeModal() {
+            document.getElementById('modal').classList.remove('active');
+        }
+
+        // Close modal on outside click
+        window.onclick = function (event) {
+            const modal = document.getElementById('modal');
+            if (event.target == modal) closeModal();
+        }
+
+        init();
+    </script>
+</body>
+
+</html>
